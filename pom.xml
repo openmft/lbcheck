@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.adi.amf</groupId>
 	<artifactId>lbcheck</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
+	<version>1.0.1</version>
 	<name>lbcheck</name>
 	<description>Load Balancer Checker</description>
 
@@ -63,9 +63,20 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-		    <groupId>com.datastax.cassandra</groupId>
-		    <artifactId>cassandra-driver-core</artifactId>
-		    <version>3.10.2</version>
+             <groupId>com.datastax.cassandra</groupId>
+             <artifactId>cassandra-driver-core</artifactId>
+             <version>3.10.2</version>
+             <exclusions>
+                 <exclusion>
+                     <groupId>io.netty</groupId>
+                     <artifactId>netty-handler</artifactId>
+                 </exclusion>
+             </exclusions>
+         </dependency>
+		<dependency>
+		    <groupId>com.ibm.db2.jcc</groupId>
+		    <artifactId>db2jcc4</artifactId>
+		    <version>10.1</version>
 		</dependency>
 		<dependency>
 		    <groupId>com.google.guava</groupId>
@@ -73,8 +84,9 @@
 		    <version>30.0-jre</version>
 		</dependency>
 		<dependency>
-		    <groupId>io.dropwizard.metrics</groupId>
+		    <groupId>com.codahale.metrics</groupId>
 		    <artifactId>metrics-core</artifactId>
+		    <version>3.0.2</version>
 		</dependency>
 		<dependency>
 		    <groupId>org.slf4j</groupId>
@@ -93,6 +105,16 @@
 		    <groupId>com.jcraft</groupId>
 		    <artifactId>jsch</artifactId>
 		    <version>0.1.55</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.ibm.mq</groupId>
+		    <artifactId>com.ibm.mq</artifactId>
+		    <version>1.0</version>
+		</dependency>
+		<dependency>
+		    <groupId>com.ibm</groupId>
+		    <artifactId>com.ibm.mq.jmqi</artifactId>
+		    <version>9.0.0.4</version>
 		</dependency>
 		<dependency>
 		    <groupId>org.springframework.boot</groupId>

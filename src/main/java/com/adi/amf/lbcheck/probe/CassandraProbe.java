@@ -21,11 +21,14 @@
 */
 package com.adi.amf.lbcheck.probe;
 
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
+import java.util.Collections;
+
 import com.adi.amf.lbcheck.probe.util.LogUtil;
 import com.adi.amf.lbcheck.probe.util.MonitorProperties;
 import com.adi.amf.lbcheck.probe.util.ProbeConstants;
 import com.adi.amf.lbcheck.probe.util.ProbeInterface;
-
 
 /*********************************************************************************
 Purpose: Module to check Cassandra Database
@@ -43,10 +46,15 @@ CAS-use-ssl = false 				# use SSL flag
 **********************************************************************************/
 
 import com.datastax.driver.core.Cluster;
-import com.datastax.driver.core.Cluster.Builder;
+import com.datastax.driver.core.QueryOptions;
 import com.datastax.driver.core.ResultSet;
 import com.datastax.driver.core.Row;
 import com.datastax.driver.core.Session;
+import com.datastax.driver.core.SocketOptions;
+import com.datastax.driver.core.policies.DefaultRetryPolicy;
+import com.datastax.driver.core.policies.LoggingRetryPolicy;
+import com.datastax.driver.core.policies.RoundRobinPolicy;
+import com.datastax.driver.core.policies.WhiteListPolicy;
 
 public class CassandraProbe implements ProbeInterface {
 
@@ -58,12 +66,14 @@ public class CassandraProbe implements ProbeInterface {
 	private String cred;
 	private boolean useSSL;
 	private String text;
+	private String timeout;
 	
 	public void init(MonitorProperties p) {
 		serviceName = p.getStringProperty(ProbeConstants.PROBE_NAME);
 		host = p.getStringProperty(ProbeConstants.HOST);
 		port = p.getIntProperty(ProbeConstants.PORT);
 		sql = p.getStringProperty(ProbeConstants.SQL);
+		timeout = p.getStringProperty(ProbeConstants.TIMEOUT);
 		user = p.getProperty(ProbeConstants.USER); // optional
 		cred = p.getProperty(ProbeConstants.CRED); // optional
 		useSSL = Boolean.parseBoolean(p.getProperty(ProbeConstants.USE_SSL)); //optional
@@ -75,20 +85,22 @@ public class CassandraProbe implements ProbeInterface {
         Cluster cluster = null;
         Session session = null;
 		try {
-	        Builder b = Cluster.builder().addContactPoint(host);
-	        b.withPort(port);
-	        if (user != null && cred != null) {
-	        	b.withCredentials(user, cred);
-	        }
-	        if (useSSL) {
-	        	b.withSSL();
-	        }
-	        cluster = b.build();
-	        session = cluster.connect();
-			ResultSet rs = session.execute(sql); 
-			Row row = rs.one();
-			text = row.getString(1);
-			result = true;
+			SocketOptions socketOptions = new SocketOptions();
+		    socketOptions.setConnectTimeoutMillis(Integer.parseInt(timeout));
+			cluster = Cluster.builder()
+                    .addContactPoints(InetAddress.getByName(host))
+                    .withPort(port)
+                    .withLoadBalancingPolicy(new WhiteListPolicy(
+                            new RoundRobinPolicy(), Collections.singletonList(new InetSocketAddress(host, port))))
+                    .withQueryOptions(new QueryOptions().setDefaultIdempotence(true))
+                    .withRetryPolicy(new LoggingRetryPolicy(DefaultRetryPolicy.INSTANCE))
+                    .withSocketOptions(socketOptions)
+                    .build();
+			 	session = cluster.connect();
+				ResultSet rs = session.execute(sql); 
+				Row row = rs.one();
+				text = row.getString(1);
+				result = true;
 		} catch (Throwable e) {
 			text = e.getMessage();
 			LogUtil.warn(this, serviceName + " failed", e);
