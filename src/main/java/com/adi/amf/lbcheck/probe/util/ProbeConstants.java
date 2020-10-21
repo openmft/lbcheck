@@ -69,4 +69,5 @@ public class ProbeConstants {
 	
 	public final static String ERROR_MISSING_CLASS = "property probe-class is missing for probe: ";
 	public final static String SERVICE_PARAM = "service";
+	public final static String TIMEOUT = "timeout";
 }
